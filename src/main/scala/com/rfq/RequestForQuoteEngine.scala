@@ -8,7 +8,6 @@ import scala.collection.immutable.List.empty
 class RequestForQuoteEngine(val liveOrderService: LiveOrderService) {
 
   def request(amount: Amount, currency: Currency.Value): Quote = {
-
     val orders = liveOrderService.request(currency)
 
     if (orders == empty)
@@ -16,15 +15,19 @@ class RequestForQuoteEngine(val liveOrderService: LiveOrderService) {
     else {
       val prices = orders map (_.price)
 
-      val maxPrice = (Price(0.0) /: prices) ((a,b) => if (a > b) a else b)
-
-      val minPrice = minimum(prices)
+      val maxPrice = searchPrices(prices, (a,b) => if (a > b) a else b)
+      val minPrice = searchPrices(prices, (a,b) => if (a < b) a else b)
 
       Quote(maxPrice - Price(ProfitValue), minPrice + Price(ProfitValue))
     }
 
   }
 
+  def searchPrices(prices: List[Price], comparePrices:(Price,Price) => Price): Price = {
+    prices reduceLeft comparePrices
+  }
+
+  //Just keeping this method as a reminder of how I could've done this recursively
   private def minimum(prices: List[Price]) :Price  = {
 
     def go(currentLowest: Price, prices: List[Price]) :Price = {
@@ -41,7 +44,6 @@ class RequestForQuoteEngine(val liveOrderService: LiveOrderService) {
     }
 
     go(prices.head, prices.tail)
-
   }
 
 }
