@@ -15,16 +15,16 @@ class RequestForQuoteEngine(val liveOrderService: LiveOrderService) {
     else {
       val prices = orders map (_.price)
 
-      val maxPrice = searchPrices(prices, (a,b) => if (a > b) a else b)
-      val minPrice = searchPrices(prices, (a,b) => if (a < b) a else b)
+      val maxPrice = searchPrices(prices, (a, b) => a > b)
+      val minPrice = searchPrices(prices, (a, b) => a < b)
 
       Quote(maxPrice - Price(ProfitValue), minPrice + Price(ProfitValue))
     }
 
   }
 
-  def searchPrices(prices: List[Price], comparePrices:(Price,Price) => Price): Price = {
-    prices reduceLeft comparePrices
+  private def searchPrices(prices: List[Price], comparePrices:(Price,Price) => Boolean): Price = {
+    prices reduceLeft ((a,b) => if (comparePrices(a,b)) a else b)
   }
 
   //Just keeping this method as a reminder of how I could've done this recursively
